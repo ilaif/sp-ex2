@@ -77,7 +77,7 @@ int spBPQueueGetMaxSize(SPBPQueue* source) {
 }
 
 SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
-    if (source == NULL || index < 0 || value < 0) {
+    if (source == NULL || index < 0) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
     }
     
@@ -92,8 +92,10 @@ SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
     bool is_full = spBPQueueIsFull(source);
     
     // Queue is full and the new value is larger than the maximum
-    if (is_full && value > source->arr[0].value) {
-        return SP_BPQUEUE_FULL;
+    if (is_full) {
+        if (value > source->arr[0].value || (value == source->arr[0].value && index > source->arr[0].index)) {
+            return SP_BPQUEUE_FULL;
+        }
     }
     
     int cur_size = spBPQueueSize(source);
@@ -116,7 +118,15 @@ SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
     } else {
         for (int i = cur_size - 1; i >= 0; i--) {
             source->arr[i+1] = source->arr[i];
-            if (value <= source->arr[i].value) {
+            if (value == source->arr[i].value) {
+                if (index < source->arr[i].index) {
+                    source->arr[i+1] = e;
+                } else {
+                    source->arr[i] = e;
+                }
+                break;
+            }
+            else if (value < source->arr[i].value) {
                 source->arr[i+1] = e;
                 break;
             }

@@ -95,11 +95,11 @@ double spPointL2SquaredDistance(SPPoint* p, SPPoint* q) {
     
     double result = 0;
     int i;
-    int dim_dist;
+    double dim_dist;
     
     for (i = 0; i < p->dim; i++) {
         dim_dist = (p->data[i] - q->data[i]);
-        result += dim_dist*dim_dist;
+        result += (dim_dist * dim_dist);
     }
     
     return result;

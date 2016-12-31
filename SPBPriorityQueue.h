@@ -59,10 +59,7 @@ SPBPQueue* spBPQueueCreate(int maxSize);
 /**
  * Allocates a copy of the given queue.
  *
- * Given the queue source, returns it's copy.
- *
  * @param source - The source queue
- * @assert (source != NUlL)
  * @return
  * NULL in case memory allocation occurs
  * Others a copy of source is returned.
@@ -82,6 +79,7 @@ void spBPQueueClear(SPBPQueue* source);
 
 /**
  * A getter for the current queue's size (number of enqueued elements inside it).
+ *
  * @param source - The source queue
  * @assert source != NULL
  * @return
@@ -91,6 +89,7 @@ int spBPQueueSize(SPBPQueue* source);
 
 /**
  * A getter for the current queue's maxSize.
+ *
  * @param source - The source queue
  * @assert source != NULL
  * @return
@@ -101,11 +100,9 @@ int spBPQueueGetMaxSize(SPBPQueue* source);
 /**
  * Enqueues a new element to source queue.
  *
- *
  * @param source - target queue.
  * @param index - index to insert to the queue.
  * @param value - value to insert to the queue.
- *
  * @return
  *	SP_BPQUEUE_FULL - If size == maxSize and value >= .
  *	SP_BPQUEUE_INVALID_ARGUMENT - If source is null.
@@ -114,17 +111,37 @@ int spBPQueueGetMaxSize(SPBPQueue* source);
 SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value);
 
 /**
- * TODO Complete documentation
+ * Dequeues the element with the lowest value if queue is not empty.
+ *
+ * @param source - target queue.
+ * @return
+ *	SP_BPQUEUE_INVALID_ARGUMENT - If source is NULL.
+ *	SP_BPQUEUE_EMPTY - If queue is empty.
+ *	SP_BPQUEUE_SUCCESS - Otherwise.
  */
 SP_BPQUEUE_MSG spBPQueueDequeue(SPBPQueue* source);
 
 /**
- * TODO Complete documentation
+ * Returns a copy of the element with the lowest value.
+ *
+ * @param source - target queue.
+ * @param res - pointer to result element.
+ * @return
+ *	SP_BPQUEUE_INVALID_ARGUMENT - If source is NULL.
+ *	SP_BPQUEUE_EMPTY - If queue is empty.
+ *	SP_BPQUEUE_SUCCESS - Otherwise.
  */
 SP_BPQUEUE_MSG spBPQueuePeek(SPBPQueue* source, BPQueueElement* res);
 
 /**
- * TODO Complete documentation
+ * Returns a copy of the element with the highest value.
+ *
+ * @param source - target queue.
+ * @param res - pointer to result element.
+ * @return
+ *	SP_BPQUEUE_INVALID_ARGUMENT - If source is NULL.
+ *	SP_BPQUEUE_EMPTY - If queue is empty.
+ *	SP_BPQUEUE_SUCCESS - Otherwise.
  */
 SP_BPQUEUE_MSG spBPQueuePeekLast(SPBPQueue* source, BPQueueElement* res);
 
@@ -151,6 +168,7 @@ double spBPQueueMaxValue(SPBPQueue* source);
 /**
  * Returns whether the queue is empty
  *
+ * @assert source != NULL
  * @return
  * true if the queue is empty (of size == 0),
  * Otherwise, false.
@@ -160,6 +178,7 @@ bool spBPQueueIsEmpty(SPBPQueue* source);
 /**
  * Returns whether the queue is full
  *
+ * @assert source != NULL
  * @return
  * true if the queue is full (of size == maxSize),
  * Otherwise, false.

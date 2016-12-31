@@ -6,6 +6,8 @@
 //  Copyright © 2016 ilai. All rights reserved.
 //
 
+//TODO: When to return message full?
+
 #include <stdlib.h>
 #include <math.h>
 #include "stdbool.h"
@@ -20,25 +22,17 @@ struct sp_bp_queue_t {
     BPQueueElement* arr;
 };
 
-// Utility Methods
-
-void swapQueueElements(BPQueueElement *A, BPQueueElement *B) {
-    BPQueueElement temp = *A;
-    *A = *B;
-    *B = temp;
-}
-
-// Public Methods
-
 SPBPQueue* spBPQueueCreate(int maxSize) {
-    if (maxSize <= 0) {
+    assert(maxSize > 0);
+    
+    SPBPQueue* queue = (SPBPQueue*) malloc(sizeof(queue));
+    
+    if (queue == NULL) {
         return NULL;
     }
     
-    SPBPQueue* queue = (SPBPQueue*) malloc(sizeof(queue));
     queue->max_size = maxSize;
-    BPQueueElement arr[maxSize];
-    queue->arr = arr;
+    queue->arr = (BPQueueElement*) malloc(sizeof(BPQueueElement) * maxSize);
     queue->size = 0;
     
     if (queue->arr == NULL) {
@@ -52,7 +46,7 @@ SPBPQueue* spBPQueueCopy(SPBPQueue* source) {
     assert(source != NULL);
     
     SPBPQueue* queue = spBPQueueCreate(source->max_size);
-    memcpy(queue->arr, source->arr, sizeof(sizeof(BPQueueElement) * source->max_size));
+    memcpy(queue->arr, source->arr, sizeof(BPQueueElement) * queue->max_size);
     queue->size = spBPQueueSize(source);
     
     return queue;
@@ -63,32 +57,35 @@ void spBPQueueDestroy(SPBPQueue* source) {
         return;
     }
     
+    free(source->arr);
     free(source);
 }
 
 void spBPQueueClear(SPBPQueue* source) {
-    //memset(source->arr, 0, sizeof(source->max_size * sizeof(BPQueueElement)));
+    assert(source != NULL);
     source->size = 0;
 }
 
 int spBPQueueSize(SPBPQueue* source) {
+    assert(source != NULL);
     return source->size;
 }
 
 int spBPQueueGetMaxSize(SPBPQueue* source) {
+    assert(source != NULL);
     return source->max_size;
 }
 
 SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
-    if (source == NULL) {
+    if (source == NULL || index < 0 || value < 0) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
     }
     
     BPQueueElement e = {index, value};
     
-    int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
+    if (spBPQueueIsEmpty(source)) {
         source->arr[0] = e;
+        source->size++;
         return SP_BPQUEUE_SUCCESS;
     }
     
@@ -96,12 +93,13 @@ SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
     
     // Queue is full and the new value is larger than the maximum
     if (is_full && value > source->arr[0].value) {
-        return SP_BPQUEUE_SUCCESS;
+        return SP_BPQUEUE_FULL;
     }
     
+    int cur_size = spBPQueueSize(source);
     if (is_full) {
         bool started_replace = false;
-        BPQueueElement last_e = {}; // TODO: Is this legal?
+        BPQueueElement last_e = {index, value}; // TODO: Is this legal?
         BPQueueElement tmp_e;
         for (int i = cur_size - 1; i >= 0; i--) {
             if (started_replace) {
@@ -126,6 +124,7 @@ SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
         if (value > source->arr[0].value) {
             source->arr[0] = e;
         }
+        source->size++;
     }
     
     return SP_BPQUEUE_SUCCESS;
@@ -136,22 +135,21 @@ SP_BPQUEUE_MSG spBPQueueDequeue(SPBPQueue* source) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
     }
     
-    int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
+    if (spBPQueueIsEmpty(source)) {
         return SP_BPQUEUE_EMPTY;
     }
     
-    source->size--;
+    source->size--; // Just ignoring the value of the minimum value is like removing it.
     return SP_BPQUEUE_SUCCESS;
 }
 
 SP_BPQUEUE_MSG spBPQueuePeek(SPBPQueue* source, BPQueueElement* res) {
-    if (source == NULL) {
+    if (source == NULL || res == NULL) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
     }
     
     int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
+    if (spBPQueueIsEmpty(source)) {
         return SP_BPQUEUE_EMPTY;
     }
     
@@ -161,12 +159,11 @@ SP_BPQUEUE_MSG spBPQueuePeek(SPBPQueue* source, BPQueueElement* res) {
 }
 
 SP_BPQUEUE_MSG spBPQueuePeekLast(SPBPQueue* source, BPQueueElement* res) {
-    if (source == NULL) {
+    if (source == NULL || res == NULL) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
     }
     
-    int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
+    if (spBPQueueIsEmpty(source)) {
         return SP_BPQUEUE_EMPTY;
     }
     
@@ -176,43 +173,27 @@ SP_BPQUEUE_MSG spBPQueuePeekLast(SPBPQueue* source, BPQueueElement* res) {
 }
 
 double spBPQueueMinValue(SPBPQueue* source) {
-    if (source == NULL) {
-        return SP_BPQUEUE_INVALID_ARGUMENT;
-    }
+    assert(source != NULL);
+    assert(!spBPQueueIsEmpty(source));
     
-    int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
-        return SP_BPQUEUE_EMPTY;
-    }
-    
-    return source->arr[cur_size - 1].value;
+    return source->arr[spBPQueueSize(source) - 1].value;
 }
 
 double spBPQueueMaxValue(SPBPQueue* source) {
-    if (source == NULL) {
-        return SP_BPQUEUE_INVALID_ARGUMENT;
-    }
-    
-    int cur_size = spBPQueueSize(source);
-    if (cur_size == 0) {
-        return SP_BPQUEUE_EMPTY;
-    }
+    assert(source != NULL);
+    assert(!spBPQueueIsEmpty(source));
     
     return source->arr[0].value;
 }
 
 bool spBPQueueIsEmpty(SPBPQueue* source) {
-    if (source == NULL) {
-        return SP_BPQUEUE_INVALID_ARGUMENT;
-    }
+    assert(source != NULL);
     
     return spBPQueueSize(source) == 0;
 }
 
 bool spBPQueueIsFull(SPBPQueue* source) {
-    if (source == NULL) {
-        return SP_BPQUEUE_INVALID_ARGUMENT;
-    }
+    assert(source != NULL);
     
     return spBPQueueSize(source) == spBPQueueGetMaxSize(source);
 }

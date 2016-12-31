@@ -8,8 +8,10 @@
 
 #include <stdio.h>
 
-int main(/*int argc, const char * argv[]*/) {
-    // insert code here...
-    printf("Hello, World!\n");
-    return 0;
-}
+#include "unit_tests/sp_bpqueue_unit_test.c"
+
+//int main(/*int argc, const char * argv[]*/) {
+//    // insert code here...
+//    printf("Hello, World!\n");
+//    return 0;
+//}

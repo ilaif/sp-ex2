@@ -25,7 +25,7 @@ struct sp_bp_queue_t {
 SPBPQueue* spBPQueueCreate(int maxSize) {
     assert(maxSize > 0);
     
-    SPBPQueue* queue = (SPBPQueue*) malloc(sizeof(queue));
+    SPBPQueue* queue = (SPBPQueue*) malloc(sizeof(SPBPQueue));
     
     if (queue == NULL) {
         return NULL;

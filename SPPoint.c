@@ -24,7 +24,7 @@ SPPoint* spPointCreate(double* data, int dim, int index) {
         return NULL;
     }
     
-    SPPoint* point = (SPPoint*) malloc(sizeof(point));
+    SPPoint* point = (SPPoint*) malloc(sizeof(SPPoint));
     point->dim = dim;
     point->index = index;
     point->data = (double*) malloc(sizeof(double) * dim);
@@ -44,7 +44,7 @@ SPPoint* spPointCopy(SPPoint* source) {
     int i;
     assert(source != NULL);
     
-    SPPoint* point = (SPPoint*) malloc(sizeof(point));
+    SPPoint* point = (SPPoint*) malloc(sizeof(SPPoint));
     
     if (point == NULL) {
         return NULL;

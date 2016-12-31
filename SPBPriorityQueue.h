@@ -42,7 +42,7 @@ typedef enum sp_bp_queue_msg_t {
 	SP_BPQUEUE_OUT_OF_MEMORY,
 	SP_BPQUEUE_FULL,
 	SP_BPQUEUE_EMPTY,
-	SP_BPQUEUE_INVALID_ARGUMENT,
+    SP_BPQUEUE_INVALID_ARGUMENT,
 	SP_BPQUEUE_SUCCESS
 } SP_BPQUEUE_MSG;
 
@@ -107,9 +107,8 @@ int spBPQueueGetMaxSize(SPBPQueue* source);
  * @param value - value to insert to the queue.
  *
  * @return
- *  SP_BPQUEUE_OUT_OF_MEMORY - If memory allocation failed.
  *	SP_BPQUEUE_FULL - If size == maxSize and value >= .
- *	SP_BPQUEUE_INVALID_ARGUMENT - If one of the arguments are NULL.
+ *	SP_BPQUEUE_INVALID_ARGUMENT - If source is null.
  *	SP_BPQUEUE_SUCCESS - Otherwise.
  */
 SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value);

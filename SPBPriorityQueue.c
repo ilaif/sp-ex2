@@ -8,14 +8,27 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <stdbool.h>
+#include "stdbool.h"
+#include "string.h"
+#include "assert.h"
 
 #include "SPBPriorityQueue.h"
 
 struct sp_bp_queue_t {
     int max_size;
-    struct BPQueueElement* list;
+    int size;
+    BPQueueElement* arr;
 };
+
+// Utility Methods
+
+void swapQueueElements(BPQueueElement *A, BPQueueElement *B) {
+    BPQueueElement temp = *A;
+    *A = *B;
+    *B = temp;
+}
+
+// Public Methods
 
 SPBPQueue* spBPQueueCreate(int maxSize) {
     if (maxSize <= 0) {
@@ -24,144 +37,182 @@ SPBPQueue* spBPQueueCreate(int maxSize) {
     
     SPBPQueue* queue = (SPBPQueue*) malloc(sizeof(queue));
     queue->max_size = maxSize;
-    queue->list = (struct BPQueueElement*) malloc(sizeof(BPQueueElement) * maxSize);
-    if (queue->list == NULL) {
+    BPQueueElement arr[maxSize];
+    queue->arr = arr;
+    queue->size = 0;
+    
+    if (queue->arr == NULL) {
         return NULL;
     }
     
-    // TODO: Kill myself.
+    return queue;
+}
+
+SPBPQueue* spBPQueueCopy(SPBPQueue* source) {
+    assert(source != NULL);
     
-    Q->list = L;
-    Q->max = maxSize;
-    return Q;
+    SPBPQueue* queue = spBPQueueCreate(source->max_size);
+    memcpy(queue->arr, source->arr, sizeof(sizeof(BPQueueElement) * source->max_size));
+    queue->size = spBPQueueSize(source);
+    
+    return queue;
 }
 
-SPBPQueue spBPQueueCopy(SPBPQueue source) {
-    SPBPQueue Q = spBPQueueCreate(source->max);
-    spListDestroy(Q->list);
-    Q->list = spListCopy(source->list);
-    return Q;
-}
-
-void spBPQueueDestroy(SPBPQueue source) {
-    if (source == NULL)
+void spBPQueueDestroy(SPBPQueue* source) {
+    if (source == NULL) {
         return;
+    }
     
-    spListDestroy(source->list);
     free(source);
 }
 
-void spBPQueueClear(SPBPQueue source) {
-    spListClear(source->list);
+void spBPQueueClear(SPBPQueue* source) {
+    //memset(source->arr, 0, sizeof(source->max_size * sizeof(BPQueueElement)));
+    source->size = 0;
 }
 
-int spBPQueueSize(SPBPQueue source) {
-    return spListGetSize(source->list);
+int spBPQueueSize(SPBPQueue* source) {
+    return source->size;
 }
 
-int spBPQueueGetMaxSize(SPBPQueue source) {
-    return source->max;
+int spBPQueueGetMaxSize(SPBPQueue* source) {
+    return source->max_size;
 }
 
-SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue source, SPListElement element) {
-    if (source == NULL || element == NULL)
+SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
+    if (source == NULL) {
         return SP_BPQUEUE_INVALID_ARGUMENT;
-    
-    int max = spBPQueueGetMaxSize(source);
-    SPListElement elm = spListElementCopy(element);
-    SP_LIST_MSG res1;
-    
-    res1 = Util_insert(source, source->list, elm);
-    //	res1 = SP_LIST_INVALID_CURRENT;
-    switch (res1) {
-        case SP_LIST_SUCCESS:
-            if (spListGetSize(source->list) > max) {
-                SPListElement temp = spBPQueuePeekLast(source); //assuming internal pointer stays on last
-                spListRemoveCurrent(source->list);   //source->list cant be null
-                spListElementDestroy(temp);
-            }
-            return SP_BPQUEUE_SUCCESS;
-        case SP_LIST_OUT_OF_MEMORY:
-            spListElementDestroy(elm);
-            return SP_BPQUEUE_OUT_OF_MEMORY;
-        case SP_LIST_INVALID_CURRENT:
-            spListElementDestroy(elm);
-            return SP_BPQUEUE_INVALID_ARGUMENT;
-        case SP_LIST_NULL_ARGUMENT:
-            spListElementDestroy(elm);
-            return SP_BPQUEUE_INVALID_ARGUMENT;
-        default:
-            spListElementDestroy(elm);
-            return SP_BPQUEUE_FULL;
     }
     
-    return (SP_BPQUEUE_MSG) NULL;
-}
-
-SP_BPQUEUE_MSG spBPQueueDequeue(SPBPQueue source) { //can we assume it isnt null
-    if (source == NULL)
-        return SP_BPQUEUE_INVALID_ARGUMENT;
+    BPQueueElement e = {index, value};
     
-    if (spListGetSize(source->list) == 0) {
-        return SP_BPQUEUE_EMPTY;
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        source->arr[0] = e;
+        return SP_BPQUEUE_SUCCESS;
+    }
+    
+    bool is_full = spBPQueueIsFull(source);
+    
+    // Queue is full and the new value is larger than the maximum
+    if (is_full && value > source->arr[0].value) {
+        return SP_BPQUEUE_SUCCESS;
+    }
+    
+    if (is_full) {
+        bool started_replace = false;
+        BPQueueElement last_e = {}; // TODO: Is this legal?
+        BPQueueElement tmp_e;
+        for (int i = cur_size - 1; i >= 0; i--) {
+            if (started_replace) {
+                tmp_e = source->arr[i];
+                source->arr[i] = last_e;
+                last_e = tmp_e;
+            }
+            else if (value <= source->arr[i].value) {
+                started_replace = true;
+                last_e = source->arr[i];
+                source->arr[i] = e;
+            }
+        }
     } else {
-        spListGetFirst(source->list);
-        SP_LIST_MSG res1 = spListRemoveCurrent(source->list);
-        switch (res1) {
-            case SP_LIST_NULL_ARGUMENT:
-                return SP_BPQUEUE_INVALID_ARGUMENT;
-            case SP_LIST_INVALID_CURRENT:
-                return SP_BPQUEUE_INVALID_ARGUMENT;
-            case SP_LIST_OUT_OF_MEMORY:
-                return SP_BPQUEUE_OUT_OF_MEMORY;
-            case SP_LIST_SUCCESS:
-                return SP_BPQUEUE_SUCCESS;
+        for (int i = cur_size - 1; i >= 0; i--) {
+            source->arr[i+1] = source->arr[i];
+            if (value <= source->arr[i].value) {
+                source->arr[i+1] = e;
+                break;
+            }
+        }
+        if (value > source->arr[0].value) {
+            source->arr[0] = e;
         }
     }
     
-    return (SP_BPQUEUE_MSG) NULL;
+    return SP_BPQUEUE_SUCCESS;
 }
 
-SPListElement spBPQueuePeek(SPBPQueue source) {
-    return spListElementCopy(spListGetFirst(source->list));
-}
-
-SPListElement spBPQueuePeekLast(SPBPQueue source) {
-    SPListElement current = spListGetFirst(source->list);
-    int size = spListGetSize(source->list);
-    int c = 1;
-    while (c < size) {
-        current = spListGetNext(source->list);
-        c++;
+SP_BPQUEUE_MSG spBPQueueDequeue(SPBPQueue* source) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
     }
-    return spListElementCopy(current);
-}
-
-double spBPQueueMinValue(SPBPQueue source) {
-    SPListElement first = spBPQueuePeek(source);
-    double value = spListElementGetValue(first);
-    spListElementDestroy(first);
-    return value;
     
-}
-
-double spBPQueueMaxValue(SPBPQueue source) {
-    SPListElement last = spBPQueuePeekLast(source);
-    double value = spListElementGetValue(last);
-    spListElementDestroy(last);
-    return value;
-}
-
-bool spBPQueueIsEmpty(SPBPQueue source) {
-    if (source == NULL)
-        return NULL;
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        return SP_BPQUEUE_EMPTY;
+    }
     
-    return (spListGetSize(source->list) == 0);
+    source->size--;
+    return SP_BPQUEUE_SUCCESS;
 }
 
-bool spBPQueueIsFull(SPBPQueue source) {
-    if (source == NULL)
-        return NULL;
+SP_BPQUEUE_MSG spBPQueuePeek(SPBPQueue* source, BPQueueElement* res) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
     
-    return (spListGetSize(source->list) == source->max);
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        return SP_BPQUEUE_EMPTY;
+    }
+    
+    res->index = source->arr[cur_size - 1].index;
+    res->value = source->arr[cur_size - 1].value;
+    return SP_BPQUEUE_SUCCESS;
+}
+
+SP_BPQUEUE_MSG spBPQueuePeekLast(SPBPQueue* source, BPQueueElement* res) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
+    
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        return SP_BPQUEUE_EMPTY;
+    }
+    
+    res->index = source->arr[0].index;
+    res->value = source->arr[0].value;
+    return SP_BPQUEUE_SUCCESS;
+}
+
+double spBPQueueMinValue(SPBPQueue* source) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
+    
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        return SP_BPQUEUE_EMPTY;
+    }
+    
+    return source->arr[cur_size - 1].value;
+}
+
+double spBPQueueMaxValue(SPBPQueue* source) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
+    
+    int cur_size = spBPQueueSize(source);
+    if (cur_size == 0) {
+        return SP_BPQUEUE_EMPTY;
+    }
+    
+    return source->arr[0].value;
+}
+
+bool spBPQueueIsEmpty(SPBPQueue* source) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
+    
+    return spBPQueueSize(source) == 0;
+}
+
+bool spBPQueueIsFull(SPBPQueue* source) {
+    if (source == NULL) {
+        return SP_BPQUEUE_INVALID_ARGUMENT;
+    }
+    
+    return spBPQueueSize(source) == spBPQueueGetMaxSize(source);
 }

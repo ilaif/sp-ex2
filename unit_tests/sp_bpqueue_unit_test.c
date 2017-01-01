@@ -209,7 +209,9 @@ static bool test_spBPQueuePeekLast() {
 	spBPQueuePeekLast(queue,elem_copy);
 	ASSERT_TRUE(elem_copy->index == 6);
 	ASSERT_TRUE(elem_copy->value == 4.5);
-	spBPQueueDestroy(queue);
+	
+    spBPQueueDestroy(queue);
+    free(elem_copy);
 
 	return true;
 }

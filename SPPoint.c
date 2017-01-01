@@ -9,7 +9,7 @@
 #include "assert.h"
 #include <stdlib.h>
 
-#include "sPPoint.h"
+#include "SPPoint.h"
 
 struct sp_point_t {
     int index;

@@ -10,7 +10,9 @@
 
 #include "main_aux.h"
 
-int main(/*int argc, const char * argv[]*/) {
-    run();
-    return 0;
-}
+#include "unit_tests/sp_bpqueue_unit_test.c"
+
+//int main() {
+//    run();
+//    return 0;
+//}

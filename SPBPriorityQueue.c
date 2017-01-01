@@ -46,6 +46,11 @@ SPBPQueue* spBPQueueCopy(SPBPQueue* source) {
     assert(source != NULL);
     
     SPBPQueue* queue = spBPQueueCreate(source->max_size);
+    
+    if (queue == NULL) {
+        return NULL;
+    }
+    
     memcpy(queue->arr, source->arr, sizeof(BPQueueElement) * queue->max_size);
     queue->size = spBPQueueSize(source);
     
@@ -101,7 +106,7 @@ SP_BPQUEUE_MSG spBPQueueEnqueue(SPBPQueue* source, int index, double value) {
     int cur_size = spBPQueueSize(source);
     if (is_full) {
         bool started_replace = false;
-        BPQueueElement last_e = {index, value}; // TODO: Is this legal?
+        BPQueueElement last_e = {index, value};
         BPQueueElement tmp_e;
         for (int i = cur_size - 1; i >= 0; i--) {
             if (started_replace) {

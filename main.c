@@ -10,9 +10,7 @@
 
 #include "main_aux.h"
 
-#include "unit_tests/sp_bpqueue_unit_test.c"
-
-//int main() {
-//    run();
-//    return 0;
-//}
+int main() {
+    run();
+    return 0;
+}
